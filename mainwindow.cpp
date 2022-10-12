@@ -137,6 +137,14 @@ void MainWindow::on_saveFile_clicked()
 void MainWindow::on_exeCommand_clicked()
 {
     QString commnadName = cbAdbCommons->currentText();
+    if(commnadName.isNull() || commnadName.isEmpty()){
+        QMessageBox::warning(this, "警告", "暂无配置文件");
+        return;
+    }
+    if(!isConnectDevice){
+        QMessageBox::warning(this, "警告", "请连接设备");
+        return;
+    }
     QString command = Config::getInstance()->value(commnadName).toString();
     Utils::getInstance()->exeCommand(command);
 }
