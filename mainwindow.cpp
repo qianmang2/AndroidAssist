@@ -73,11 +73,11 @@ void MainWindow::setStausBarCommand()
         if(result.length() > 1){
             QString serialNumber = result.at(0);
             statusbar->setToolTip(serialNumber);
-        }
-        QString brand = Utils::getInstance()->exeCommand("adb shell getprop ro.product.brand", false, false);
-        QString model = Utils::getInstance()->exeCommand("adb shell getprop ro.product.model", false, false);
-        statusbar->showMessage("已连接设备：" + brand + " " + model);
-        isConnectDevice = true;
+            QString brand = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.brand", false, false);
+            QString model = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.model", false, false);
+            statusbar->showMessage("已连接设备：" + brand + " " + model);
+            isConnectDevice = true;
+         }
     }else{
         statusbar->showMessage("未连接设备");
         isConnectDevice = false;
@@ -122,12 +122,12 @@ void MainWindow::on_saveFile_clicked()
     QString sourceFile = leSourceFile->text();
     QString destFile = leDestFile->text();
     QString command;
-    if(sourceFile.contains(QRegExp("^\\w:.*")) && !destFile.contains(QRegExp("^\\w:.*"))){
+    if(sourceFile.contains(QRegExp("^\\w:.{2,}")) && !destFile.contains(QRegExp("^\\w:.*"))){
         command = "adb -s " + statusbar->toolTip() + " push "+ sourceFile + " " + destFile;
         Utils::getInstance()->exeCommand(command, "保存文件成功，保存路径："+ destFile);
-    }else if(!sourceFile.contains(QRegExp("^\\w:.*")) && destFile.contains(QRegExp("^\\w:.*"))){
+    }else if(!sourceFile.contains(QRegExp("^\\w:.*")) && destFile.contains(QRegExp("^\\w:.{2,}"))){
+        command = "adb -s " + statusbar->toolTip() + " pull "+ sourceFile + " " + destFile;
         Utils::getInstance()->exeCommand(command, "保存文件成功，保存路径："+ destFile);
-        command = "adb -s " +statusbar->toolTip()+ " pull "+ sourceFile + " " + destFile;
     }else{
         QMessageBox::warning(this, "错误", "文件路径错误，请检查");
     }
@@ -145,6 +145,6 @@ void MainWindow::on_exeCommand_clicked()
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
-    QString command = Config::getInstance()->value(commnadName).toString();
+    QString command = Config::getInstance()->value(commnadName).toString().arg(statusbar->toolTip());
     Utils::getInstance()->exeCommand(command);
 }
