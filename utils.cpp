@@ -47,7 +47,7 @@ QString Utils::exeCommand(QString command, QString log)
     return result;
 }
 
-void Utils::screenshotCommand()
+void Utils::screenshotCommand(QString serialNumber)
 {
     QString filePath = QCoreApplication::applicationDirPath();
     QDir dir(filePath);
@@ -58,8 +58,8 @@ void Utils::screenshotCommand()
     filePath = filePath + "/screen/";
     QString fileName =  "Screenshot_" + dateTime.toString("yy_MM_dd_HHmmss") + ".png";
     QString screenshot = "/sdcard/" + fileName;
-    exeCommand("adb shell screencap -p " + screenshot, false);
-    exeCommand("adb pull " + screenshot + " " + filePath, false);
-    exeCommand("adb shell rm -rf " + screenshot, false);
+    QString result = exeCommand("adb -s " + serialNumber + " shell screencap -p " + screenshot, false);
+    exeCommand("adb -s " + serialNumber + " pull " + screenshot + " " + filePath, false);
+    exeCommand("adb -s " + serialNumber + " shell rm -rf " + screenshot, false);
     emit onLog("截图保存路径：" + filePath + fileName);
 }

@@ -16,7 +16,7 @@ public:
     static Utils* getInstance();
     QString exeCommand(QString command, bool isOnLog = true, bool isOnCommand = true, QString prefixLog= nullptr, QString suffixLog = nullptr);
     QString exeCommand(QString command, QString log);
-    void screenshotCommand();
+    void screenshotCommand(QString serialNumber);
 
 private:
     QProcess *process = new QProcess();

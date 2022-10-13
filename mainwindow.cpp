@@ -44,7 +44,7 @@ void MainWindow::initView()
             QMessageBox::warning(this, "警告", "请连接设备");
             return;
         }
-        Utils::getInstance()->screenshotCommand();
+        Utils::getInstance()->screenshotCommand(statusbar->toolTip());
     });
     connect(Utils::getInstance(), &Utils::onLog, [&](QString log){
         teLog->append(log);
@@ -122,16 +122,21 @@ void MainWindow::on_saveFile_clicked()
     QString sourceFile = leSourceFile->text();
     QString destFile = leDestFile->text();
     QString command;
+    QString log;
     if(sourceFile.contains(QRegExp("^\\w:.{2,}")) && !destFile.contains(QRegExp("^\\w:.*"))){
         command = "adb -s " + statusbar->toolTip() + " push "+ sourceFile + " " + destFile;
-        Utils::getInstance()->exeCommand(command, "保存文件成功，保存路径："+ destFile);
+         log = Utils::getInstance()->exeCommand(command, false);
     }else if(!sourceFile.contains(QRegExp("^\\w:.*")) && destFile.contains(QRegExp("^\\w:.{2,}"))){
         command = "adb -s " + statusbar->toolTip() + " pull "+ sourceFile + " " + destFile;
-        Utils::getInstance()->exeCommand(command, "保存文件成功，保存路径："+ destFile);
-    }else{
+        log = Utils::getInstance()->exeCommand(command, false);
+    } else{
         QMessageBox::warning(this, "错误", "文件路径错误，请检查");
     }
-
+    if(log.contains("error: failed")){
+        QMessageBox::warning(this, "错误", "文件路径错误，请检查");
+    }else{
+        teLog->append("保存文件成功，保存路径：" + destFile);
+    }
 }
 
 void MainWindow::on_exeCommand_clicked()
