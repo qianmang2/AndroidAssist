@@ -172,7 +172,7 @@ void MainWindow::on_exeCommand_clicked()
         return;
     }
     QString command = Config::getInstance()->value(commnadName).toString().arg(statusbar->toolTip());
-    Utils::getInstance()->exeCommand(command);
+    Utils::getInstance()->exeCommand(command.arg(statusbar->toolTip()));
 }
 
 //插入翻译字符串
