@@ -19,7 +19,7 @@ Utils *Utils::getInstance()
     return instance;
 }
 
-QString Utils::exeCommand(QString command, bool isOnLog, bool isOnCommand, QString prefixLog, QString suffixLog)
+QString Utils::exeCommand(QString command, bool isOnLog, QString prefixLog, QString suffixLog)
 {
     process->start(command);
     process->waitForFinished();

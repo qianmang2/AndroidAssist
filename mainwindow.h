@@ -28,12 +28,20 @@ private slots:
 
     void on_exeCommand_clicked();
 
+    void on_pbInsertString_clicked();
+
+    void on_pbTranslatePath_clicked();
+
+    void on_pbProjectPath_clicked();
+
+    void handleTranslateTask();
+
 private:
     void initView();
     void setStausBar();
     void setStausBarCommand();
     void setAdbCommand();
-
+    QStringList readProjectContent();
 private:
     Ui::MainWindow *ui;
     QPushButton *pbScreenshot;
@@ -45,7 +53,14 @@ private:
     QPushButton *destSelectFile;
     QStatusBar *statusbar;
     bool isConnectDevice = false;
+    QLineEdit *leTranslatePath;
+    QLineEdit *leProjectPath;
+    QTextEdit *translateStringId;
+    UDisk *pDisk = nullptr;
+    QThread *thread = nullptr;
+signals:
+    void onLog(QString log);
+    void onErrorMessage(QString errorMessage);
 
-    UDisk *pDisk;
 };
 #endif // MAINWINDOW_H
