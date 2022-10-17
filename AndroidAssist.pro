@@ -37,4 +37,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
+    icon.rc \
     release/AndroidAssist.rar
+
+OTHER_FILES += logo.rc
+RC_FILE += icon.rc
