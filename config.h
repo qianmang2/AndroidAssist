@@ -15,6 +15,7 @@ public:
     QSettings *setting;
     QStringList keys();
     QVariant value(QString key);
+    void setValue(QString key, QString value);
 
 signals:
 

@@ -30,5 +30,10 @@ QVariant Config::value(QString key)
     return setting->value(key);
 }
 
+void Config::setValue(QString key, QString value)
+{
+    setting->setValue(key, value);
+}
+
 
 

@@ -11,6 +11,9 @@
 #include <QTimer>
 #include <QThread>
 
+#define TRANSLATE_PATH "translatePath"
+#define PROJECT_PATH "projectPath"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -185,17 +188,21 @@ void MainWindow::on_pbInsertString_clicked()
 
 void MainWindow::on_pbTranslatePath_clicked()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, "选择目录");
+    QString defaultDir = Config::getInstance()->value(TRANSLATE_PATH).toString();
+    QString dir = QFileDialog::getExistingDirectory(this, "选择目录", defaultDir);
     if(!dir.isNull() && !dir.isEmpty()){
         leTranslatePath->setText(dir);
+         Config::getInstance()->setValue(TRANSLATE_PATH, dir);
     }
 }
 
 void MainWindow::on_pbProjectPath_clicked()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, "选择目录");
+    QString defaultDir = Config::getInstance()->value(PROJECT_PATH).toString();
+    QString dir = QFileDialog::getExistingDirectory(this, "选择目录", defaultDir);
     if(!dir.isNull() && !dir.isEmpty()){
         leProjectPath->setText(dir);
+        Config::getInstance()->setValue(PROJECT_PATH, dir);
     }
 }
 
