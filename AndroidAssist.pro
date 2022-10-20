@@ -16,15 +16,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    config.cpp \
+    adbcommandconfig.cpp \
+    deviceutil.cpp \
     main.cpp \
     mainwindow.cpp \
+    projectconfig.cpp \
     udisk.cpp \
     utils.cpp
 
 HEADERS += \
-    config.h \
+    adbcommandconfig.h \
+    deviceutil.h \
     mainwindow.h \
+    projectconfig.h \
     udisk.h \
     utils.h
 

@@ -6,12 +6,12 @@
 #include <QSettings>
 #include <QStringList>
 
-class Config : public QObject
+class AdbCommandConfig : public QObject
 {
     Q_OBJECT
 public:
-    explicit Config(QObject *parent = nullptr);
-    static Config* getInstance();
+    explicit AdbCommandConfig(QObject *parent = nullptr);
+    static AdbCommandConfig* getInstance();
     QSettings *setting;
     QStringList keys();
     QVariant value(QString key);

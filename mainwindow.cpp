@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include "utils.h"
 #include <QStandardItemModel>
-#include <config.h>
+#include <adbcommandconfig.h>
 #include <QFileDialog>
 #include <QRegExp>
 #include <QMessageBox>
@@ -10,6 +10,10 @@
 #include <QDebug>
 #include <QTimer>
 #include <QThread>
+#include <deviceutil.h>
+#include <projectconfig.h>
+#include <QPalette>
+#include <QDesktopServices>
 
 #define TRANSLATE_PATH "translatePath"
 #define PROJECT_PATH "projectPath"
@@ -53,11 +57,11 @@ MainWindow::~MainWindow()
 void MainWindow::initView()
 {
     connect(pbScreenshot, &QPushButton::clicked, this, [=](){
-        if(!isConnectDevice){
+        if(!DeviceUtil::getInstance()->isConnected){
             QMessageBox::warning(this, "警告", "请连接设备");
             return;
         }
-        Utils::getInstance()->screenshotCommand(statusbar->toolTip());
+        Utils::getInstance()->screenshotCommand(DeviceUtil::getInstance()->serialNumber);
     });
     connect(Utils::getInstance(), &Utils::onLog, [&](QString log){
         teLog->append(log);
@@ -96,21 +100,32 @@ void MainWindow::setStausBarCommand()
         QStringList result = devices.at(1).split(QRegExp("\\t"));
         if(result.length() > 1){
             QString serialNumber = result.at(0);
-            statusbar->setToolTip(serialNumber);
+            DeviceUtil::getInstance()->serialNumber = serialNumber;
             QString brand = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.brand", false);
             QString model = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.model", false);
             statusbar->showMessage("已连接设备：" + brand + " " + model);
-            isConnectDevice = true;
+            DeviceUtil::getInstance()->isConnected = true;
         }
     }else{
         statusbar->showMessage("未连接设备");
-        isConnectDevice = false;
+        DeviceUtil::getInstance()->serialNumber = nullptr;
+        DeviceUtil::getInstance()->isConnected = false;
     }
+    QPushButton *help = new QPushButton("使用帮助", statusbar);
+    connect(help, &QPushButton::clicked, this, []{
+        QDesktopServices::openUrl(QUrl("https://github.com/qianmang2/AndroidAssist"));
+    });
+    QPalette p;
+    help->setFlat(true);
+    help->setAttribute(Qt::WA_TranslucentBackground);
+    p.setColor(QPalette::ButtonText, Qt::blue);
+    help->setPalette(p);
+    statusbar->addPermanentWidget(help);
 }
 
 void MainWindow::setAdbCommand()
 {
-    QStringList keys = Config::getInstance()->keys();
+    QStringList keys = AdbCommandConfig::getInstance()->keys();
     cbAdbCommons->addItems(keys);
     cbAdbCommons->setMaxVisibleItems(8);
     QStandardItemModel *model = (QStandardItemModel*)cbAdbCommons->model();
@@ -139,7 +154,7 @@ void MainWindow::on_destSelectFile_clicked()
 
 void MainWindow::on_saveFile_clicked()
 {
-    if(!isConnectDevice){
+    if(!DeviceUtil::getInstance()->isConnected){
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
@@ -148,10 +163,10 @@ void MainWindow::on_saveFile_clicked()
     QString command;
     QString log;
     if(sourceFile.contains(QRegExp("^\\w:.{2,}")) && !destFile.contains(QRegExp("^\\w:.*"))){
-        command = "adb -s " + statusbar->toolTip() + " push "+ sourceFile + " " + destFile;
+        command = "adb -s " + DeviceUtil::getInstance()->serialNumber + " push "+ sourceFile + " " + destFile;
         log = Utils::getInstance()->exeCommand(command, false);
     }else if(!sourceFile.contains(QRegExp("^\\w:.*")) && destFile.contains(QRegExp("^\\w:.{2,}"))){
-        command = "adb -s " + statusbar->toolTip() + " pull "+ sourceFile + " " + destFile;
+        command = "adb -s " + DeviceUtil::getInstance()->serialNumber + " pull "+ sourceFile + " " + destFile;
         log = Utils::getInstance()->exeCommand(command, false);
     } else{
         QMessageBox::warning(this, "错误", "文件路径错误，请检查");
@@ -170,12 +185,12 @@ void MainWindow::on_exeCommand_clicked()
         QMessageBox::warning(this, "警告", "暂无配置文件");
         return;
     }
-    if(!isConnectDevice){
+    if(!DeviceUtil::getInstance()->isConnected){
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
-    QString command = Config::getInstance()->value(commnadName).toString().arg(statusbar->toolTip());
-    Utils::getInstance()->exeCommand(command.arg(statusbar->toolTip()));
+    QString command = AdbCommandConfig::getInstance()->value(commnadName).toString().arg(DeviceUtil::getInstance()->serialNumber);
+    Utils::getInstance()->exeCommand(command.arg(DeviceUtil::getInstance()->serialNumber));
 }
 
 //插入翻译字符串
@@ -188,21 +203,21 @@ void MainWindow::on_pbInsertString_clicked()
 
 void MainWindow::on_pbTranslatePath_clicked()
 {
-    QString defaultDir = Config::getInstance()->value(TRANSLATE_PATH).toString();
+    QString defaultDir = AdbCommandConfig::getInstance()->value(TRANSLATE_PATH).toString();
     QString dir = QFileDialog::getExistingDirectory(this, "选择目录", defaultDir);
     if(!dir.isNull() && !dir.isEmpty()){
         leTranslatePath->setText(dir);
-         Config::getInstance()->setValue(TRANSLATE_PATH, dir);
+         ProjectConfig::getInstance()->setValue(TRANSLATE_PATH, dir);
     }
 }
 
 void MainWindow::on_pbProjectPath_clicked()
 {
-    QString defaultDir = Config::getInstance()->value(PROJECT_PATH).toString();
+    QString defaultDir = AdbCommandConfig::getInstance()->value(PROJECT_PATH).toString();
     QString dir = QFileDialog::getExistingDirectory(this, "选择目录", defaultDir);
     if(!dir.isNull() && !dir.isEmpty()){
         leProjectPath->setText(dir);
-        Config::getInstance()->setValue(PROJECT_PATH, dir);
+        ProjectConfig::getInstance()->setValue(PROJECT_PATH, dir);
     }
 }
 

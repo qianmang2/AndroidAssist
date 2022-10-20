@@ -52,7 +52,6 @@ private:
     QPushButton *sourceSelectFile;
     QPushButton *destSelectFile;
     QStatusBar *statusbar;
-    bool isConnectDevice = false;
     QLineEdit *leTranslatePath;
     QLineEdit *leProjectPath;
     QTextEdit *translateStringId;

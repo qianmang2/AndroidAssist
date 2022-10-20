@@ -1,10 +1,10 @@
-#include "config.h"
+#include "adbcommandconfig.h"
 #include "QSettings"
 #include "QCoreApplication"
 #include <QTextCodec>
 #include <QDebug>
-Q_GLOBAL_STATIC(Config, instance)
-Config::Config(QObject *parent) : QObject(parent)
+Q_GLOBAL_STATIC(AdbCommandConfig, instance)
+AdbCommandConfig::AdbCommandConfig(QObject *parent) : QObject(parent)
 {
     QString configFile = QCoreApplication::applicationDirPath() + "/config.ini";
     qDebug() << configFile;
@@ -15,22 +15,22 @@ Config::Config(QObject *parent) : QObject(parent)
     setting->setIniCodec(QTextCodec::codecForName("UTF-8"));
 }
 
-Config *Config::getInstance()
+AdbCommandConfig *AdbCommandConfig::getInstance()
 {
     return instance();
 }
 
-QStringList Config::keys()
+QStringList AdbCommandConfig::keys()
 {
     return setting->allKeys();
 }
 
-QVariant Config::value(QString key)
+QVariant AdbCommandConfig::value(QString key)
 {
     return setting->value(key);
 }
 
-void Config::setValue(QString key, QString value)
+void AdbCommandConfig::setValue(QString key, QString value)
 {
     setting->setValue(key, value);
 }
