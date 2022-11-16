@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     leTranslatePath = ui->leTranslatePath;
     leProjectPath = ui->leProjectPath;
     translateStringId = ui->translateStringId;
-
+    pbScreenRecord = ui->pbScreenRecord;
     pDisk = new UDisk;
     qApp->installNativeEventFilter(pDisk);
     initView();
@@ -84,6 +84,17 @@ void MainWindow::initView()
 void MainWindow::setStausBar()
 {
     setStausBarCommand();
+    QPushButton *help = new QPushButton("使用帮助", statusbar);
+    connect(help, &QPushButton::clicked, this, []{
+        QDesktopServices::openUrl(QUrl("https://github.com/qianmang2/AndroidAssist"));
+    });
+    QPalette p;
+    help->setFlat(true);
+    help->setAttribute(Qt::WA_TranslucentBackground);
+    p.setColor(QPalette::ButtonText, Qt::blue);
+    help->setPalette(p);
+    statusbar->addPermanentWidget(help);
+
     connect(pDisk, &UDisk::deviceChange, this, [&]() {
         QTimer::singleShot(2000, [&](){
             setStausBarCommand();
@@ -100,27 +111,24 @@ void MainWindow::setStausBarCommand()
         QStringList result = devices.at(1).split(QRegExp("\\t"));
         if(result.length() > 1){
             QString serialNumber = result.at(0);
+            QString status = result.at(1);
             DeviceUtil::getInstance()->serialNumber = serialNumber;
             QString brand = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.brand", false);
             QString model = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.model", false);
-            statusbar->showMessage("已连接设备：" + brand + " " + model);
-            DeviceUtil::getInstance()->isConnected = true;
+            if(brand.isNull() || brand.isEmpty()){
+                statusbar->showMessage("设备连接异常：" + status);
+                DeviceUtil::getInstance()->isConnected = false;
+            }else{
+                statusbar->showMessage("已连接设备：" + brand + " " + model);
+                DeviceUtil::getInstance()->isConnected = true;
+            }
         }
     }else{
         statusbar->showMessage("未连接设备");
         DeviceUtil::getInstance()->serialNumber = nullptr;
         DeviceUtil::getInstance()->isConnected = false;
     }
-    QPushButton *help = new QPushButton("使用帮助", statusbar);
-    connect(help, &QPushButton::clicked, this, []{
-        QDesktopServices::openUrl(QUrl("https://github.com/qianmang2/AndroidAssist"));
-    });
-    QPalette p;
-    help->setFlat(true);
-    help->setAttribute(Qt::WA_TranslucentBackground);
-    p.setColor(QPalette::ButtonText, Qt::blue);
-    help->setPalette(p);
-    statusbar->addPermanentWidget(help);
+
 }
 
 void MainWindow::setAdbCommand()

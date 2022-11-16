@@ -57,6 +57,7 @@ private:
     QTextEdit *translateStringId;
     UDisk *pDisk = nullptr;
     QThread *thread = nullptr;
+    QPushButton *pbScreenRecord;
 signals:
     void onLog(QString log);
     void onErrorMessage(QString errorMessage);

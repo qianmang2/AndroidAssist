@@ -2,6 +2,8 @@
 #include "QDateTime"
 #include "QCoreApplication"
 #include "QDir"
+#include "QDebug"
+#include "QTimer"
 
 Q_GLOBAL_STATIC(Utils, instance)
 Utils::Utils(QObject *parent) : QObject(parent)
@@ -33,10 +35,33 @@ QString Utils::exeCommand(QString command, bool isOnLog, QString prefixLog, QStr
             resultLog = resultLog + suffixLog;
         }
         emit onLog(resultLog);
-      }
+    }
     return log;
 
 }
+
+//QString Utils::exeCommand(QString command)
+//{
+//    //    QThread *thread = new QThread();
+//    //    moveToThread(thread);
+//    //    thread->start();
+//    //    connect(thread, &QThread::started, this, [&](){
+//    process->start(command);
+//    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [&](int exitCode, QProcess::ExitStatus exitStatus){
+//        qDebug() << "exitCode" << exitCode << "exitStatus" << exitStatus;
+
+//    });
+
+//}
+
+void Utils::callback(QString serialNumber, QString screensRecord, QString filePath, QString fileName)
+{
+    exeCommand("adb -s " + serialNumber + " pull " + screensRecord + " " + filePath, false);
+    exeCommand("adb -s " + serialNumber + " shell rm -rf " + screensRecord, false);
+    emit onLog("截图保存路径：" + filePath + fileName);
+}
+
+
 
 QString Utils::exeCommand(QString command, QString log)
 {
@@ -63,3 +88,5 @@ void Utils::screenshotCommand(QString serialNumber)
     exeCommand("adb -s " + serialNumber + " shell rm -rf " + screenshot, false);
     emit onLog("截图保存路径：" + filePath + fileName);
 }
+
+
