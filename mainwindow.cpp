@@ -101,7 +101,7 @@ void MainWindow::setStausBar()
     statusbar->addPermanentWidget(help);
 
     connect(pDisk, &UDisk::deviceChange, this, [&]() {
-        QTimer::singleShot(2000, [&](){
+        QTimer::singleShot(1000, [&](){
             setStausBarCommand();
         });
     });
@@ -120,7 +120,7 @@ void MainWindow::setStausBarCommand()
             DeviceUtil::getInstance()->serialNumber = serialNumber;
             QString brand = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.brand", false);
             QString model = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.model", false);
-            if(brand.isNull() || brand.isEmpty()){
+            if(brand.isNull() || brand.isEmpty()) {
                 statusbar->showMessage("设备连接异常：" + status);
                 DeviceUtil::getInstance()->isConnected = false;
             }else{
