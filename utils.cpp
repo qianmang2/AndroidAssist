@@ -4,6 +4,8 @@
 #include "QDir"
 #include "QDebug"
 #include "QTimer"
+#include "QGlobalStatic"
+
 
 Q_GLOBAL_STATIC(Utils, instance)
 Utils::Utils(QObject *parent) : QObject(parent)
@@ -24,7 +26,9 @@ Utils *Utils::getInstance()
 QString Utils::exeCommand(QString command, bool isOnLog, QString prefixLog, QString suffixLog)
 {
     process->start(command);
-    process->waitForFinished();
+    QEventLoop loop;
+    connect(process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), &loop, &QEventLoop::quit);
+    loop.exec();
     QString log = QString(process->readAllStandardOutput());
     if(isOnLog){
         QString resultLog = log.trimmed();
@@ -39,29 +43,6 @@ QString Utils::exeCommand(QString command, bool isOnLog, QString prefixLog, QStr
     return log;
 
 }
-
-//QString Utils::exeCommand(QString command)
-//{
-//    //    QThread *thread = new QThread();
-//    //    moveToThread(thread);
-//    //    thread->start();
-//    //    connect(thread, &QThread::started, this, [&](){
-//    process->start(command);
-//    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, [&](int exitCode, QProcess::ExitStatus exitStatus){
-//        qDebug() << "exitCode" << exitCode << "exitStatus" << exitStatus;
-
-//    });
-
-//}
-
-void Utils::callback(QString serialNumber, QString screensRecord, QString filePath, QString fileName)
-{
-    exeCommand("adb -s " + serialNumber + " pull " + screensRecord + " " + filePath, false);
-    exeCommand("adb -s " + serialNumber + " shell rm -rf " + screensRecord, false);
-    emit onLog("截图保存路径：" + filePath + fileName);
-}
-
-
 
 QString Utils::exeCommand(QString command, QString log)
 {
@@ -89,4 +70,41 @@ void Utils::screenshotCommand(QString serialNumber)
     emit onLog("截图保存路径：" + filePath + fileName);
 }
 
+QString Utils::startScreenshotRecording(QString serialNumber,MainWindow *mainWindow, Callback callback)
+{
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString fileName =  "Screenshot_" + dateTime.toString("yy_MM_dd_HHmmss") + ".mp4";
+    QString screenshot = "/sdcard/" + fileName;
+    process->start("adb -s " + serialNumber + " shell screenrecord " + screenshot);
+    (mainWindow->*callback)();
+    emit onLog("开始录屏");
+    return fileName;
+}
+
+
+void Utils::endScreenshotRecording(QString serialNumber,QString fileName,MainWindow *mainWindow, Callback callback)
+{
+    process->close();
+    QTimer::singleShot(500, [=](){
+        qDebug() << QThread::currentThreadId();
+        QString filePath = QCoreApplication::applicationDirPath();
+        QDir dir(filePath);
+        if(!dir.exists("screen")){
+            dir.mkdir("screen");
+        }
+        filePath = filePath + "/screen/";
+        process->start("adb -s " + serialNumber + " pull /sdcard/" + fileName + " " + filePath);
+        qDebug() << "adb -s " + serialNumber + " pull /sdcard/" + fileName + " " + filePath;
+        QEventLoop loop;
+        connect(process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), &loop, &QEventLoop::quit);
+        loop.exec();
+        process->start("adb -s " + serialNumber + " shell rm -rf /sdcard/" + fileName);
+
+        QEventLoop loop2;
+        connect(process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished), &loop2, &QEventLoop::quit);
+        loop.exec();
+        (mainWindow->*callback)();
+        emit onLog("录屏保存路径：" + filePath + fileName);
+    });
+}
 

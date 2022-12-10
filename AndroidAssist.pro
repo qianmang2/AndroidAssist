@@ -21,14 +21,17 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     projectconfig.cpp \
+    translatepresent.cpp \
     udisk.cpp \
     utils.cpp
 
 HEADERS += \
     adbcommandconfig.h \
+    callback.h \
     deviceutil.h \
     mainwindow.h \
     projectconfig.h \
+    translatepresent.h \
     udisk.h \
     utils.h
 

@@ -9,10 +9,7 @@
 #include <QThread>
 #include <QByteArray>
 #include <QPushButton>
-class Callback{
-public:
-    void callback(QByteArray byteArray);
-};
+#include "callback.h"
 
 typedef  void (*CALL_BACK)(QString serialNumber, QString screensRecord, QString filePath, QString fileName);
 class Utils : public QObject
@@ -25,7 +22,8 @@ public:
     QString exeCommand(QString command, bool isOnLog = true, QString prefixLog= nullptr, QString suffixLog = nullptr);
     QString exeCommand(QString command, QString log);
     void screenshotCommand(QString serialNumber);
-    void callback(QString serialNumber, QString screensRecord, QString filePath, QString fileName);
+    QString startScreenshotRecording(QString serialNumber,MainWindow *mainWindow, Callback callback);
+    void endScreenshotRecording(QString serialNumber,QString fileName, MainWindow *object, Callback callback);
 
 private:
     QProcess *process = new QProcess();

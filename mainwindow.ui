@@ -132,7 +132,7 @@
            <item row="0" column="1">
             <widget class="QPushButton" name="pbScreenRecord">
              <property name="text">
-              <string>录屏</string>
+              <string>开始录屏</string>
              </property>
             </widget>
            </item>
@@ -237,7 +237,7 @@
      <x>0</x>
      <y>0</y>
      <width>490</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

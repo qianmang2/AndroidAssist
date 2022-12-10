@@ -8,6 +8,8 @@
 #include <QComboBox>
 #include <QStatusBar>
 #include <udisk.h>
+#include <translatepresent.h>
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -36,12 +38,19 @@ private slots:
 
     void handleTranslateTask();
 
+    void on_pbScreenRecord_clicked();
+
+    void endRecordCallback();
+
+    void startRecordCallback();
+
 private:
     void initView();
     void setStausBar();
     void setStausBarCommand();
     void setAdbCommand();
     QStringList readProjectContent();
+    bool isRecording = false;
 private:
     Ui::MainWindow *ui;
     QPushButton *pbScreenshot;
@@ -57,7 +66,9 @@ private:
     QTextEdit *translateStringId;
     UDisk *pDisk = nullptr;
     QThread *thread = nullptr;
-    QPushButton *pbScreenRecord;
+    QPushButton *pbScreenRecord = nullptr;
+
+    TranslatePresent *translatePresent = nullptr;
 signals:
     void onLog(QString log);
     void onErrorMessage(QString errorMessage);

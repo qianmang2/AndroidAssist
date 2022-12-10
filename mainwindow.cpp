@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     qApp->installNativeEventFilter(pDisk);
     initView();
     setStausBar();
+
 }
 
 MainWindow::~MainWindow()
@@ -51,6 +52,10 @@ MainWindow::~MainWindow()
     qApp->removeNativeEventFilter(pDisk);
     if(thread != nullptr){
         delete thread;
+    }
+
+    if(translatePresent != nullptr){
+        delete translatePresent;
     }
 }
 
@@ -215,7 +220,7 @@ void MainWindow::on_pbTranslatePath_clicked()
     QString dir = QFileDialog::getExistingDirectory(this, "选择目录", defaultDir);
     if(!dir.isNull() && !dir.isEmpty()){
         leTranslatePath->setText(dir);
-         ProjectConfig::getInstance()->setValue(TRANSLATE_PATH, dir);
+        ProjectConfig::getInstance()->setValue(TRANSLATE_PATH, dir);
     }
 }
 
@@ -231,85 +236,49 @@ void MainWindow::on_pbProjectPath_clicked()
 
 void MainWindow::handleTranslateTask()
 {
-    int count = 0;
+    if(translatePresent == nullptr){
+        translatePresent = new TranslatePresent(this);
+        connect(translatePresent, &TranslatePresent::onLog, [&](QString log){
+            teLog->append(log);
+        });
+
+        connect(translatePresent, &TranslatePresent::onErrorMessage, this, [&](QString errorMessage){
+            QMessageBox::warning(this, "警告", errorMessage);
+        });
+
+    }
     QString translatePath = leTranslatePath->text();
     QString projectPath = leProjectPath->text();
     QString stringIdStr = translateStringId->toPlainText();
-    if(stringIdStr.isNull() || stringIdStr.isEmpty()){
-        emit onLog("翻译字符串id为空，任务结束");
-        return;
-    }
-    QStringList stringIds = stringIdStr.split("\n");
+    translatePresent->insertTranslateTask(translatePath, projectPath, stringIdStr);
+}
 
-    QDir translatePathDir(translatePath);
-    QDir projectPathDir(projectPath);
-    if(!translatePathDir.exists() || (!translatePath.endsWith("/res") && !translatePath.endsWith("/res/"))){
-        emit onErrorMessage("翻译目录不正确");
-        return;
-    }
-    if(!projectPathDir.exists() || (!projectPath.endsWith("/res") && !projectPath.endsWith("/res/"))){
-        emit onErrorMessage("工程目录不正确");
-        return;
-    }
-    QStringList translatePathDirs = translatePathDir.entryList(QDir::Dirs);
-    QStringList projectPathDirs = projectPathDir.entryList(QDir::Dirs);
-    foreach(QString dirName, translatePathDirs){
-        if(!dirName.startsWith("values")){
-            translatePathDirs.removeOne(dirName); //清除非value目录
-        }
-    }
 
-    for(int i = 0 ; i < translatePathDirs.size(); i++){
-        QString dir = translatePathDirs.at(i);
-        QFile translateFile(translatePath + "/"+dir + "/strings.xml" );
-        if(!translateFile.exists()){
-            continue;
-        }
-        if(!projectPathDirs.contains(dir)){
-            if(!projectPathDir.exists(dir)){
-                projectPathDir.mkdir(dir);
-            }
-        }
-        QString projectAll="";
-        QFile projectFile(projectPath + "/" + dir + "/strings.xml");
-        if(!projectFile.exists()){
-            projectFile.open(QIODevice::ReadWrite|QIODevice::Text);
-            projectAll.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
-                    .append("\n")
-                    .append("<resources xmlns:android=\"http://schemas.android.com/apk/res/android\">");
-        }
-        projectFile.open(QIODevice::ReadWrite|QIODevice::Text);
-        QTextStream projectTextStream(&projectFile);
-        while(!projectTextStream.atEnd()){
-            projectAll.append(projectTextStream.readAll());
-        }
-        projectFile.close();
-        projectAll.replace("</resources>","");
-        projectAll = projectAll.trimmed();
-        translateFile.open(QIODevice::ReadOnly | QIODevice::Text);
-        QTextStream textStream(&translateFile);
-        emit onLog("--------开始处理" + dir + "目录--------");
-        bool isInsert = false;
-        while(!textStream.atEnd()){
-            QString line = textStream.readLine();
-            qDebug() << line;
-            foreach(QString stringId, stringIds){
-                if(line.contains("<string name=\"" + stringId+ "\"") && !projectAll.contains(line)){
-                    projectAll.append("\n").append( line);
-                    isInsert = true;
-                    emit onLog(dir + "增加" + stringId + "成功");
-                }
-            }
-        }
-        if(isInsert){
-            count++;
-        }
-        projectAll.append("\n").append("</resources>");
-        projectFile.open(QIODevice::ReadWrite|QIODevice::Text|QIODevice::Truncate);
-        projectTextStream<< projectAll;
-        translateFile.close();
-        projectFile.close();
+void MainWindow::startRecordCallback()
+{
+    pbScreenRecord->setText("停止录屏");
+    pbScreenRecord->setEnabled(true);
+}
+
+
+void MainWindow::endRecordCallback(){
+    pbScreenRecord->setText("开始录屏");
+    pbScreenRecord->setEnabled(true);
+}
+
+
+
+QString recordFileName;
+void MainWindow::on_pbScreenRecord_clicked()
+{
+    if(isRecording){
+        pbScreenRecord->setEnabled(false);
+        Utils::getInstance()->endScreenshotRecording(DeviceUtil::getInstance()->serialNumber, recordFileName, this, &MainWindow::endRecordCallback);
+
+
+    }else{
+        pbScreenRecord->setEnabled(false);
+        recordFileName = Utils::getInstance()->startScreenshotRecording(DeviceUtil::getInstance()->serialNumber, this, &MainWindow::startRecordCallback);
     }
-    qDebug()<<count;
-    emit onLog(QString("统计:已成功插入%1%2").arg(count).arg("种语言"));
+    isRecording = !isRecording;
 }
