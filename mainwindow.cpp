@@ -14,6 +14,7 @@
 #include <projectconfig.h>
 #include <QPalette>
 #include <QDesktopServices>
+#include <QProgressDialog>
 
 #define TRANSLATE_PATH "translatePath"
 #define PROJECT_PATH "projectPath"
@@ -56,6 +57,10 @@ MainWindow::~MainWindow()
 
     if(translatePresent != nullptr){
         delete translatePresent;
+    }
+
+    if(progress != nullptr){
+        delete  progress;
     }
 }
 
@@ -260,21 +265,43 @@ void MainWindow::startRecordCallback()
     pbScreenRecord->setEnabled(true);
 }
 
-
 void MainWindow::endRecordCallback(){
     pbScreenRecord->setText("开始录屏");
     pbScreenRecord->setEnabled(true);
+    dismissProgress();
 }
 
+void MainWindow::showProgress(QString title, QString label)
+{
+    if(progress == nullptr){
+        progress = new QProgressDialog(this);
+        progress->setValue(0);
+        progress->setMinimumDuration(1);
+        progress->setMinimumWidth(300);
+        progress->setWindowFlags(Qt::Dialog|Qt::WindowCloseButtonHint|Qt::CustomizeWindowHint);
+        progress->setWindowModality(Qt::WindowModal);
+        progress->setRange(0,0);
+    }
+    progress->setCancelButton(nullptr);
+    progress->setWindowTitle(title);
+    progress->setLabelText(label);
+    progress->show();
+}
 
+void MainWindow::dismissProgress()
+{
+    if(progress != nullptr){
+        progress->close();
+    }
+}
 
 QString recordFileName;
 void MainWindow::on_pbScreenRecord_clicked()
 {
     if(isRecording){
+        showProgress();
         pbScreenRecord->setEnabled(false);
         Utils::getInstance()->endScreenshotRecording(DeviceUtil::getInstance()->serialNumber, recordFileName, this, &MainWindow::endRecordCallback);
-
 
     }else{
         pbScreenRecord->setEnabled(false);

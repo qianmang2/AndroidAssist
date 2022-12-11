@@ -9,6 +9,7 @@
 #include <QStatusBar>
 #include <udisk.h>
 #include <translatepresent.h>
+#include <QProgressDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -44,6 +45,10 @@ private slots:
 
     void startRecordCallback();
 
+    void showProgress(QString title = "请稍候", QString label="保存中...");
+
+    void dismissProgress();
+
 private:
     void initView();
     void setStausBar();
@@ -69,6 +74,9 @@ private:
     QPushButton *pbScreenRecord = nullptr;
 
     TranslatePresent *translatePresent = nullptr;
+
+    QProgressDialog *progress = nullptr;
+
 signals:
     void onLog(QString log);
     void onErrorMessage(QString errorMessage);

@@ -25,6 +25,7 @@ public:
     QString startScreenshotRecording(QString serialNumber,MainWindow *mainWindow, Callback callback);
     void endScreenshotRecording(QString serialNumber,QString fileName, MainWindow *object, Callback callback);
 
+
 private:
     QProcess *process = new QProcess();
     QThread *thread= nullptr;
