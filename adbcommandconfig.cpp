@@ -12,6 +12,7 @@ AdbCommandConfig::AdbCommandConfig(QObject *parent) : QObject(parent)
     setting->setValue("1.显示页面", "adb -s %1 shell \"dumpsys window | grep mCurrentFocus\"");
     setting->setValue("2.大字体", "adb -s %1 shell settings put system font_scale 2.0");
     setting->setValue("3.小字体", "adb -s %1 shell settings put system font_scale 1.0");
+    setting->setValue("4.屏幕分辨率", "adb -s %1 shell wm size");
     setting->setIniCodec(QTextCodec::codecForName("UTF-8"));
 }
 
