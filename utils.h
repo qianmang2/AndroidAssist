@@ -21,15 +21,17 @@ public:
     static Utils* getInstance();
     QString exeCommand(QString command, bool isOnLog = true, QString prefixLog= nullptr, QString suffixLog = nullptr);
     QString exeCommand(QString command, QString log);
+    QString checkCommand(QString command);
     void screenshotCommand(QString serialNumber);
     QString startScreenshotRecording(QString serialNumber,MainWindow *mainWindow, Callback callback);
     void endScreenshotRecording(QString serialNumber,QString fileName, MainWindow *object, Callback callback);
 
-
 private:
-    QProcess *process = new QProcess();
+    QProcess *processTask = new QProcess();
     QThread *thread= nullptr;
     bool isRecord = false; //是否录屏
+
+    QProcess *processLongTask = new QProcess();
 
 signals:
     void onLog(QString log);

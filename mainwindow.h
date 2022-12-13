@@ -7,9 +7,10 @@
 #include <QTextEdit>
 #include <QComboBox>
 #include <QStatusBar>
-#include <udisk.h>
 #include <translatepresent.h>
 #include <QProgressDialog>
+#include <QTimer>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -49,6 +50,8 @@ private slots:
 
     void dismissProgress();
 
+    void checkDeviceConnect();
+
 private:
     void initView();
     void setStausBar();
@@ -69,13 +72,16 @@ private:
     QLineEdit *leTranslatePath;
     QLineEdit *leProjectPath;
     QTextEdit *translateStringId;
-    UDisk *pDisk = nullptr;
     QThread *thread = nullptr;
     QPushButton *pbScreenRecord = nullptr;
 
     TranslatePresent *translatePresent = nullptr;
 
     QProgressDialog *progress = nullptr;
+
+     QTimer *timer = new QTimer();
+
+     QComboBox *devicesComboBox = new QComboBox();
 
 signals:
     void onLog(QString log);

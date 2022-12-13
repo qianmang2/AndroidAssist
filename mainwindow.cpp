@@ -6,9 +6,7 @@
 #include <QFileDialog>
 #include <QRegExp>
 #include <QMessageBox>
-#include <udisk.h>
 #include <QDebug>
-#include <QTimer>
 #include <QThread>
 #include <deviceutil.h>
 #include <projectconfig.h>
@@ -36,21 +34,14 @@ MainWindow::MainWindow(QWidget *parent)
     leProjectPath = ui->leProjectPath;
     translateStringId = ui->translateStringId;
     pbScreenRecord = ui->pbScreenRecord;
-    pDisk = new UDisk;
-    qApp->installNativeEventFilter(pDisk);
     initView();
     setStausBar();
-
+    checkDeviceConnect();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-
-    if(pDisk != nullptr){
-        delete pDisk;
-    }
-    qApp->removeNativeEventFilter(pDisk);
     if(thread != nullptr){
         delete thread;
     }
@@ -62,16 +53,18 @@ MainWindow::~MainWindow()
     if(progress != nullptr){
         delete  progress;
     }
+
+    delete timer;
 }
 
 void MainWindow::initView()
 {
     connect(pbScreenshot, &QPushButton::clicked, this, [=](){
-        if(!DeviceUtil::getInstance()->isConnected){
+        if(!DeviceUtil::getInstance()->isUserable()){
             QMessageBox::warning(this, "警告", "请连接设备");
             return;
         }
-        Utils::getInstance()->screenshotCommand(DeviceUtil::getInstance()->serialNumber);
+        Utils::getInstance()->screenshotCommand(DeviceUtil::getInstance()->getSelectDevice().serialNumber);
     });
     connect(Utils::getInstance(), &Utils::onLog, [&](QString log){
         teLog->append(log);
@@ -104,41 +97,67 @@ void MainWindow::setStausBar()
     p.setColor(QPalette::ButtonText, Qt::blue);
     help->setPalette(p);
     statusbar->addPermanentWidget(help);
-
-    connect(pDisk, &UDisk::deviceChange, this, [&]() {
-        QTimer::singleShot(1000, [&](){
-            setStausBarCommand();
-        });
-    });
+    statusbar->addWidget(devicesComboBox);
 }
 
 void MainWindow::setStausBarCommand()
 {
-    QString result = Utils::getInstance()->exeCommand("adb devices", false);
+    QString result = Utils::getInstance()->checkCommand("adb devices");
     QStringList devices = result.split(QRegExp("\r\n"));
     qDebug() << devices;
     if(devices.length() > 1 && devices.at(1).length() > 1){
-        QStringList result = devices.at(1).split(QRegExp("\\t"));
-        if(result.length() > 1){
-            QString serialNumber = result.at(0);
-            QString status = result.at(1);
-            DeviceUtil::getInstance()->serialNumber = serialNumber;
-            QString brand = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.brand", false);
-            QString model = Utils::getInstance()->exeCommand("adb -s " + serialNumber + " shell getprop ro.product.model", false);
-            if(brand.isNull() || brand.isEmpty()) {
-                statusbar->showMessage("设备连接异常：" + status);
-                DeviceUtil::getInstance()->isConnected = false;
-            }else{
-                statusbar->showMessage("已连接设备：" + brand + " " + model);
-                DeviceUtil::getInstance()->isConnected = true;
+        QList<DevicesBean> deviceBeans;
+        QStringList newSerialNumbers;
+        for(QString device : devices){
+            QStringList result = device.split(QRegExp("\\t"));
+            if(result.length() > 1) {
+                statusbar->clearMessage();
+                QString serialNumber = result.at(0);
+                DevicesBean bean;
+                QString status = result.at(1);
+                QString brand = Utils::getInstance()->checkCommand("adb -s " + serialNumber + " shell getprop ro.product.brand");
+                QString mode = Utils::getInstance()->checkCommand("adb -s " + serialNumber + " shell getprop ro.product.model");
+                bean.serialNumber = serialNumber;
+
+                if(brand.isNull() || brand.isEmpty()) {
+                    bean.displayName = "设备连接异常：" + status;
+                    bean.isUseable = false;
+                } else {
+                    bean.brand = brand.trimmed();
+                    bean.mode = mode.trimmed();
+                    bean.displayName = bean.brand + " " + bean.mode;
+                    bean.isUseable = true;
+                    newSerialNumbers << serialNumber;
+                }
+                deviceBeans << bean;
             }
         }
-    }else{
-        statusbar->showMessage("未连接设备");
-        DeviceUtil::getInstance()->serialNumber = nullptr;
-        DeviceUtil::getInstance()->isConnected = false;
-    }
 
+        for(DevicesBean bean : deviceBeans){
+            QStringList serialNumbers = DeviceUtil::getInstance()->getSerialNumbers();
+            if(!serialNumbers.contains(bean.serialNumber)){
+                DeviceUtil::getInstance()->addDevice(bean);
+                devicesComboBox->addItem(bean.displayName);
+            }
+        }
+
+        QStringList serialNumbers = DeviceUtil::getInstance()->getSerialNumbers();
+        for(int i = 0 ; i< serialNumbers.size(); i++){
+            QString  serialNumber= serialNumbers.at(i);
+            if(!newSerialNumbers.contains(serialNumber)){
+                int index = DeviceUtil::getInstance()->indexOf(serialNumber);
+                DeviceUtil::getInstance()->remove(serialNumber);
+                devicesComboBox->removeItem(index);
+            }
+        }
+        int index = devicesComboBox->currentIndex();
+        DevicesBean bean = DeviceUtil::getInstance()->getDeviceBean(index);
+        DeviceUtil::getInstance()->setSelectDevice(bean);
+
+    } else {
+        statusbar->showMessage("未连接设备");
+        DeviceUtil::getInstance()->setSelectDevice(DevicesBean());
+    }
 }
 
 void MainWindow::setAdbCommand()
@@ -172,7 +191,7 @@ void MainWindow::on_destSelectFile_clicked()
 
 void MainWindow::on_saveFile_clicked()
 {
-    if(!DeviceUtil::getInstance()->isConnected){
+    if(!DeviceUtil::getInstance()->isUserable()){
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
@@ -181,10 +200,10 @@ void MainWindow::on_saveFile_clicked()
     QString command;
     QString log;
     if(sourceFile.contains(QRegExp("^\\w:.{2,}")) && !destFile.contains(QRegExp("^\\w:.*"))){
-        command = "adb -s " + DeviceUtil::getInstance()->serialNumber + " push "+ sourceFile + " " + destFile;
+        command = "adb -s " + DeviceUtil::getInstance()->getSelectDevice().serialNumber + " push "+ sourceFile + " " + destFile;
         log = Utils::getInstance()->exeCommand(command, false);
     }else if(!sourceFile.contains(QRegExp("^\\w:.*")) && destFile.contains(QRegExp("^\\w:.{2,}"))){
-        command = "adb -s " + DeviceUtil::getInstance()->serialNumber + " pull "+ sourceFile + " " + destFile;
+        command = "adb -s " + DeviceUtil::getInstance()->getSelectDevice().serialNumber + " pull "+ sourceFile + " " + destFile;
         log = Utils::getInstance()->exeCommand(command, false);
     } else{
         QMessageBox::warning(this, "错误", "文件路径错误，请检查");
@@ -203,12 +222,12 @@ void MainWindow::on_exeCommand_clicked()
         QMessageBox::warning(this, "警告", "暂无配置文件");
         return;
     }
-    if(!DeviceUtil::getInstance()->isConnected){
+    if(!DeviceUtil::getInstance()->isUserable()){
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
-    QString command = AdbCommandConfig::getInstance()->value(commnadName).toString().arg(DeviceUtil::getInstance()->serialNumber);
-    Utils::getInstance()->exeCommand(command.arg(DeviceUtil::getInstance()->serialNumber));
+    QString command = AdbCommandConfig::getInstance()->value(commnadName).toString().arg(DeviceUtil::getInstance()->getSelectDevice().serialNumber);
+    Utils::getInstance()->exeCommand(command.arg(DeviceUtil::getInstance()->getSelectDevice().serialNumber));
 }
 
 //插入翻译字符串
@@ -298,14 +317,30 @@ void MainWindow::dismissProgress()
 QString recordFileName;
 void MainWindow::on_pbScreenRecord_clicked()
 {
+    if(!DeviceUtil::getInstance()->isUserable()){
+        QMessageBox::warning(this, "警告", "请连接设备");
+        return;
+    }
     if(isRecording){
         showProgress();
         pbScreenRecord->setEnabled(false);
-        Utils::getInstance()->endScreenshotRecording(DeviceUtil::getInstance()->serialNumber, recordFileName, this, &MainWindow::endRecordCallback);
+        Utils::getInstance()->endScreenshotRecording(DeviceUtil::getInstance()->getSelectDevice().serialNumber, recordFileName, this, &MainWindow::endRecordCallback);
 
     }else{
         pbScreenRecord->setEnabled(false);
-        recordFileName = Utils::getInstance()->startScreenshotRecording(DeviceUtil::getInstance()->serialNumber, this, &MainWindow::startRecordCallback);
+        recordFileName = Utils::getInstance()->startScreenshotRecording(DeviceUtil::getInstance()->getSelectDevice().serialNumber, this, &MainWindow::startRecordCallback);
     }
     isRecording = !isRecording;
+}
+
+void MainWindow::checkDeviceConnect()
+{
+    connect(devicesComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [&](int index){
+        DevicesBean bean = DeviceUtil::getInstance()->getDeviceBean(index);
+        DeviceUtil::getInstance()->setSelectDevice(bean);
+    });
+    connect(timer, &QTimer::timeout, this, [&](){
+        setStausBarCommand();
+    });
+    timer->start(2000);
 }
