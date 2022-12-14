@@ -43,9 +43,14 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+
+
 DISTFILES += \
     AndroidAssist.rar \
     icon.rc
+
+VERSION = 1.0.1
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 OTHER_FILES += logo.rc
 RC_FILE += icon.rc

@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    QString s = APP_VERSION;
+    setWindowTitle("Android开发助手 V" + s);
     pbScreenshot= ui->pbScreenshot;
     teLog = ui->teLog;
     cbAdbCommons = ui->cbAdbCommons;
@@ -46,7 +48,7 @@ MainWindow::~MainWindow()
         delete thread;
     }
 
-    if(translatePresent != nullptr){
+    if(translatePresent != nullptr) {
         delete translatePresent;
     }
 
@@ -133,9 +135,9 @@ void MainWindow::setStausBarCommand()
             }
         }
 
-        for(DevicesBean bean : deviceBeans){
+        for(DevicesBean bean : deviceBeans) {
             QStringList serialNumbers = DeviceUtil::getInstance()->getSerialNumbers();
-            if(!serialNumbers.contains(bean.serialNumber)){
+            if(!serialNumbers.contains(bean.serialNumber)) {
                 DeviceUtil::getInstance()->addDevice(bean);
                 devicesComboBox->addItem(bean.displayName);
             }
@@ -153,6 +155,7 @@ void MainWindow::setStausBarCommand()
         int index = devicesComboBox->currentIndex();
         DevicesBean bean = DeviceUtil::getInstance()->getDeviceBean(index);
         DeviceUtil::getInstance()->setSelectDevice(bean);
+        devicesComboBox->show();
 
     } else {
         statusbar->showMessage("未连接设备");

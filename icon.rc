@@ -1,1 +1,37 @@
 IDI_ICON1          ICON   DISCARDABLE   "/logo.ico"
+
+#if defined(UNDER_CE)
+#include <winbase.h>
+#else
+#include <winver.h>
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    2022,12,15,1
+PRODUCTVERSION 1,0,1
+FILEFLAGS      0x0L
+FILEFLAGSMASK  0x3fL
+FILEOS         VOS_NT_WINDOWS32
+FILETYPE       VFT_APP
+FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "FileDescription", "协助安卓开发，摆脱难记的安卓命令"
+            VALUE "CompanyName", "qianmang"
+            VALUE "FileDescription", ""
+            VALUE "FileVersion", "1.0.1"
+            VALUE "LegalCopyright", "qianmang"
+            VALUE "InternalName", ""
+            VALUE "OriginalFilename", "AndroidAssist.exe"
+            VALUE "ProductName", "AndroidAssist.exe"
+            VALUE "ProductVersion", "1.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
