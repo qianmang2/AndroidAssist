@@ -140,6 +140,11 @@ void MainWindow::setStausBarCommand()
             if(!serialNumbers.contains(bean.serialNumber)) {
                 DeviceUtil::getInstance()->addDevice(bean);
                 devicesComboBox->addItem(bean.displayName);
+                QStandardItemModel *model = (QStandardItemModel*)devicesComboBox->model();
+                for( int i = 0; i < model->rowCount(); i++){
+                    QStandardItem *item = model->item(i);
+                    item->setSizeHint(QSize(0, 30));
+                }
             }
         }
 
@@ -171,7 +176,7 @@ void MainWindow::setAdbCommand()
     QStandardItemModel *model = (QStandardItemModel*)cbAdbCommons->model();
     for( int i = 0; i < model->rowCount(); i++){
         QStandardItem *item = model->item(i);
-        item->setSizeHint(QSize(0, 25));
+        item->setSizeHint(QSize(0, 30));
     }
 }
 
@@ -324,7 +329,7 @@ void MainWindow::on_pbScreenRecord_clicked()
         QMessageBox::warning(this, "警告", "请连接设备");
         return;
     }
-    if(isRecording){
+    if(isRecording) {
         showProgress();
         pbScreenRecord->setEnabled(false);
         Utils::getInstance()->endScreenshotRecording(DeviceUtil::getInstance()->getSelectDevice().serialNumber, recordFileName, this, &MainWindow::endRecordCallback);
@@ -342,7 +347,7 @@ void MainWindow::checkDeviceConnect()
         DevicesBean bean = DeviceUtil::getInstance()->getDeviceBean(index);
         DeviceUtil::getInstance()->setSelectDevice(bean);
     });
-    connect(timer, &QTimer::timeout, this, [&](){
+    connect(timer, &QTimer::timeout, this, [&]() {
         setStausBarCommand();
     });
     timer->start(2000);
