@@ -10,7 +10,7 @@
 #include <translatepresent.h>
 #include <QProgressDialog>
 #include <QTimer>
-
+#include <languagepresent.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -59,6 +59,7 @@ private:
     void setAdbCommand();
     QStringList readProjectContent();
     bool isRecording = false;
+
 private:
     Ui::MainWindow *ui;
     QPushButton *pbScreenshot;
@@ -74,14 +75,17 @@ private:
     QTextEdit *translateStringId;
     QThread *thread = nullptr;
     QPushButton *pbScreenRecord = nullptr;
+    QPushButton *pbChangeLang = nullptr;
 
     TranslatePresent *translatePresent = nullptr;
 
+    LanguagePresent *languagePresent = nullptr;
+
     QProgressDialog *progress = nullptr;
 
-     QTimer *timer = new QTimer();
+    QTimer *timer = new QTimer();
 
-     QComboBox *devicesComboBox = new QComboBox();
+    QComboBox *devicesComboBox = new QComboBox();
 
 signals:
     void onLog(QString log);

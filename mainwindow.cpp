@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     leProjectPath = ui->leProjectPath;
     translateStringId = ui->translateStringId;
     pbScreenRecord = ui->pbScreenRecord;
+    pbChangeLang = ui->pb_change_lang;
     initView();
     setStausBar();
     checkDeviceConnect();
@@ -55,7 +56,7 @@ MainWindow::~MainWindow()
     if(progress != nullptr){
         delete  progress;
     }
-
+    timer->stop();
     delete timer;
 }
 
@@ -83,6 +84,16 @@ void MainWindow::initView()
         QMessageBox::warning(this, "警告", errorMessage);
     });
 
+
+    connect(pbChangeLang, &QPushButton::clicked, this, [&](){
+        if(languagePresent == nullptr){
+            languagePresent = new LanguagePresent(ui);
+            connect(languagePresent, &LanguagePresent::onLog, this, [&](QString log){
+                teLog->append(log);
+            });
+        }
+        languagePresent->languageTask();
+    });
     setAdbCommand();
 }
 
@@ -300,7 +311,7 @@ void MainWindow::endRecordCallback(){
 
 void MainWindow::showProgress(QString title, QString label)
 {
-    if(progress == nullptr){
+    if(progress == nullptr) {
         progress = new QProgressDialog(this);
         progress->setValue(0);
         progress->setMinimumDuration(1);
