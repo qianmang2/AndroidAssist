@@ -19,6 +19,7 @@ SOURCES += \
     adbcommandconfig.cpp \
     devicesbean.cpp \
     deviceutil.cpp \
+    languagepresent.cpp \
     main.cpp \
     mainwindow.cpp \
     projectconfig.cpp \
@@ -30,6 +31,7 @@ HEADERS += \
     callback.h \
     devicesbean.h \
     deviceutil.h \
+    languagepresent.h \
     mainwindow.h \
     projectconfig.h \
     translatepresent.h \
