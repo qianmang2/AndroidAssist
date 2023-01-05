@@ -46,6 +46,20 @@ void TranslatePresent::insertTranslateTask(QString translatePath, QString projec
                 projectPathDir.mkdir(dir);
             }
         }
+        qDebug() << "filename=" <<translateFile.fileName();
+        translateFile.open(QIODevice::ReadOnly | QIODevice::Text);
+        QTextStream textStream(&translateFile);
+        QString translateAll = textStream.readAll();
+        bool hasContainStringId = true;
+        foreach(QString stringId, stringIds){
+            QString type1 = "<string name=\"" + stringId+ "\"";
+            QString type2 = "<plurals name=\"" + stringId+ "\"";
+            hasContainStringId &= translateAll.contains(type1) || translateAll.contains(type2);
+        }
+        if(!hasContainStringId){
+            continue;
+        }
+
         QString projectAll="";
         QFile projectFile(projectPath + "/" + dir + "/strings.xml");
         if(!projectFile.exists()){
@@ -60,18 +74,41 @@ void TranslatePresent::insertTranslateTask(QString translatePath, QString projec
             projectAll.append(projectTextStream.readAll());
         }
         projectFile.close();
-        projectAll.replace("</resources>","");
-        projectAll = projectAll.trimmed();
-        translateFile.open(QIODevice::ReadOnly | QIODevice::Text);
-        QTextStream textStream(&translateFile);
+
+
         emit onLog("--------开始处理" + dir + "目录--------");
         bool isInsert = false;
+        textStream.resetStatus();
+        textStream.seek(0);
+        QString newInsertString= "";
         while(!textStream.atEnd()){
             QString line = textStream.readLine();
             qDebug() << line;
             foreach(QString stringId, stringIds){
                 if(line.contains("<string name=\"" + stringId+ "\"") && !projectAll.contains(line)){
-                    projectAll.append("\n").append( line);
+                    newInsertString.append( line).append("\n");
+                    if(!line.contains("</string>")){
+                        while(true){
+                            QString line = textStream.readLine();
+                            newInsertString.append( line).append("\n");
+                            if(line.contains("</string>")){
+                                break;
+                            }
+                        }
+                    }
+
+
+                    isInsert = true;
+                    emit onLog(dir + "增加" + stringId + "成功");
+                }else if(line.contains("<plurals name=\"" + stringId+ "\"") && !projectAll.contains(line)){
+                    newInsertString.append( line).append("\n");
+                    while(true){
+                        QString line = textStream.readLine();
+                        newInsertString.append( line).append("\n");
+                        if(line.contains("</plurals>")){
+                            break;
+                        }
+                    }
                     isInsert = true;
                     emit onLog(dir + "增加" + stringId + "成功");
                 }
@@ -80,7 +117,8 @@ void TranslatePresent::insertTranslateTask(QString translatePath, QString projec
         if(isInsert){
             count++;
         }
-        projectAll.append("\n").append("</resources>");
+        int index = projectAll.lastIndexOf("</resources>");
+        projectAll.insert(index, newInsertString);
         projectFile.open(QIODevice::ReadWrite|QIODevice::Text|QIODevice::Truncate);
         projectTextStream<< projectAll;
         translateFile.close();
