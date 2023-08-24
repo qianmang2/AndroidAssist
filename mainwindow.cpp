@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "utils.h"
 #include <QStandardItemModel>
@@ -280,7 +280,7 @@ void MainWindow::on_pbProjectPath_clicked()
 void MainWindow::handleTranslateTask()
 {
     if(translatePresent == nullptr){
-        translatePresent = new TranslatePresent(this);
+        translatePresent = new TranslatePresent(ui, this);
         connect(translatePresent, &TranslatePresent::onLog, [&](QString log){
             teLog->append(log);
         });
@@ -293,7 +293,7 @@ void MainWindow::handleTranslateTask()
     QString translatePath = leTranslatePath->text();
     QString projectPath = leProjectPath->text();
     QString stringIdStr = translateStringId->toPlainText();
-    translatePresent->insertTranslateTask(translatePath, projectPath, stringIdStr);
+    translatePresent->append();
 }
 
 

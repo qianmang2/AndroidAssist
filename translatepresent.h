@@ -1,19 +1,18 @@
-#ifndef TRANSLATEPRESENT_H
+﻿#ifndef TRANSLATEPRESENT_H
 #define TRANSLATEPRESENT_H
 
 #include <QObject>
+#include "ui_mainwindow.h"
 
-class MainWindow;
 class TranslatePresent : public QObject
 {
     Q_OBJECT
 public:
-    explicit TranslatePresent(MainWindow *mainWindow, QObject *parent = nullptr);
+    explicit TranslatePresent(Ui::MainWindow *ui, QObject *parent = nullptr);
 
-    void insertTranslateTask(QString translatePath, QString projectPath, QString stringIdStr);
-
+    void append();
 private:
-    MainWindow *mainWindow;
+    Ui::MainWindow *ui;
 
 signals:
     void onLog(QString log);
